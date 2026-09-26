@@ -1,25 +1,25 @@
 import { Info } from "lucide-react";
 import PosterFrame from "../../components/PosterFrame/PosterFrame";
 import StarRating from "../../components/StarRating/StarRating";
-import type { Movie } from "../../types/movie";
-import type { MoviePerformance } from "../../types/moviePerformance";
+import type { MovieCatalogItem } from "../../types/movieCatalogItem";
 import styles from "./MovieCard.module.css";
 
 function MovieCard({
-  movie,
-  moviePerformance,
+  movieCatalogItem
 }: {
-  movie: Movie;
-  moviePerformance: MoviePerformance;
+  movieCatalogItem : MovieCatalogItem
 }) {
   // nota_tmdb vem na escala de 0 a 10; StarRating espera de 0 a 5.
-  const starValue = moviePerformance.notaTmdb
-    ? Math.round(moviePerformance.notaTmdb / 2)
+  const starValue = movieCatalogItem.notaMedia
+    ? Math.round(movieCatalogItem.notaMedia)
     : 0;
-
+  
+  const posterUrl = movieCatalogItem.posterUrl
+    ? movieCatalogItem.posterUrl : movieCatalogItem.titulo
+  
   return (
     <div className={styles.card}>
-      <PosterFrame src={movie.posterUrl} alt={movie.titulo} size={180} />
+      <PosterFrame src={posterUrl} alt={movieCatalogItem.titulo} size={180} />
 
       <div className={styles.footer}>
         <StarRating value={starValue} />

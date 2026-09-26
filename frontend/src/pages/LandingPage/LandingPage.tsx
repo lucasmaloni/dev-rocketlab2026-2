@@ -1,8 +1,30 @@
-import { 
-  X, Menu, Search, Star, Trash2, Pencil, Plus, Check, Film, 
-  Clapperboard, MessageSquare, ArrowLeft,ChevronLeft, ChevronRight, type LucideIcon,
+import {
+  X,
+  Menu,
+  Search,
+  Star,
+  Trash2,
+  Pencil,
+  Plus,
+  Check,
+  Film,
+  Clapperboard,
+  MessageSquare,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
+import MovieCard from "../../features/MovieCard/MovieCard";
 import styles from "./LandingPage.module.css";
+import type { MovieCatalogItem } from "../../types/movieCatalogItem";
+
+const mockMovie: MovieCatalogItem = {
+  skMovieId: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+  titulo: "Evangelion: 3.0+1.0 Thrice Upon a Time",
+  posterUrl: "https://m.media-amazon.com/images/M/MV5BNWYzOTRlYzItMmM5Ni00NjQxLWIwYjUtYTFhYTVhOWRhYWEyXkEyXkFqcGc@._V1_QL75_UY281_CR11,0,190,281_.jpg",
+  notaMedia: 4.0
+}
 
 const icons: { name: string; Icon: LucideIcon }[] = [
   { name: "X", Icon: X },
@@ -57,6 +79,13 @@ function LandingPage() {
           <p className="muted">
             Visualização dos ícones do Lucide com as cores definidas no index.css.
           </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2>Movie card</h2>
+          <div className={styles.row}>
+            <MovieCard movieCatalogItem={mockMovie} />
+          </div>
         </section>
 
         <section className={styles.section}>
