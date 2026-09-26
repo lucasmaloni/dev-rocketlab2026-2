@@ -3,8 +3,10 @@ from datetime import date
 from pathlib import Path
 from decimal import Decimal
 
+from sqlalchemy import Table
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase
 
 from app.movies.models import (
   DimMovie, 
@@ -19,7 +21,13 @@ from app.movies.models import (
   bridge_movie_company
 )
 
-SEEDS_DIR = Path(__file__).resolve().parents[3] / "data" / "seeds"
+SEEDS_DIR = Path(__file__).resolve().parents[3] / "migrations" / "data" / "seeds"
+
+# Limite de variáveis por statement no SQLite (padrão de build costuma ser 999
+# ou 32766). Mantemos um valor conservador único para todas as tabelas, para
+# não precisar calcular o limite por número de colunas de cada uma.
+BATCH_SIZE = 500
+
 
 class Seeder():
 
@@ -50,7 +58,7 @@ class Seeder():
   
   @staticmethod
   def _parse_int(value: str) -> int | None:
-    return int(value) if value else None
+    return int(float(value)) if value else None
 
   @staticmethod
   def _parse_float(value: str) -> float | None:
@@ -67,6 +75,22 @@ class Seeder():
   @staticmethod
   def _parse_int_or_zero(value: str) -> int:
     return int(value) if value else 0
+
+  async def _insert_in_batches(
+    self,
+    table: type[DeclarativeBase] | Table,
+    values: list[dict],
+    conflict_cols: list[str]
+    ) -> None:
+    """Insere `values` em lotes, evitando estourar o limite de variáveis
+    por statement do SQLite quando a tabela de origem tem muitas linhas
+    (ex: CSVs com dezenas de milhares de registros)."""
+
+    for start in range(0, len(values), BATCH_SIZE):
+      batch = values[start : start + BATCH_SIZE]
+      stmt = sqlite_insert(table).values(batch)
+      stmt = stmt.on_conflict_do_nothing(index_elements=conflict_cols)
+      await self.session.execute(stmt)
 
   async def seed_movies(self, filename: str = "movies") -> None:
     rows = self._read_csv(self.files[filename])
@@ -91,9 +115,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(DimMovie).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_movie_id"])
-    await self.session.execute(stmt)  
+    await self._insert_in_batches(DimMovie, values, ["sk_movie_id"])
 
   async def seed_genres(self, filename:str = "genres") -> None:
     rows = self._read_csv(self.files[filename])
@@ -110,9 +132,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(DimGenre).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_genre_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(DimGenre, values, ["sk_genre_id"])
 
   async def seed_people(self, filename: str = "people") -> None:
     rows = self._read_csv(self.files[filename])
@@ -130,9 +150,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(DimPerson).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_person_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(DimPerson, values, ["sk_person_id"])
 
   async def seed_reviews(self, filename: str = "reviews") -> None:
     rows = self._read_csv(self.files[filename])
@@ -151,9 +169,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(DimReview).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_review_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(DimReview, values, ["sk_review_id"])
 
   async def seed_companies(self, filename: str = "companies") -> None:
     rows = self._read_csv(self.files[filename])
@@ -170,9 +186,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(DimCompany).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_company_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(DimCompany, values, ["sk_company_id"])
 
   async def seed_fact_movies(self, filename: str = "fact_movies") -> None:
     rows = self._read_csv(self.files[filename])
@@ -199,9 +213,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(FactMoviePerformance).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_movie_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(FactMoviePerformance, values, ["sk_movie_id"])
 
   async def seed_movies_reviews(self, filename: str = "movies_reviews") -> None:
     rows = self._read_csv(self.files[filename])
@@ -221,9 +233,7 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(MovieReview).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_movie_review_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(MovieReview, values, ["sk_movie_review_id"])
 
   async def seed_bridge_movie_person(self, filename: str = "bridge_movie_person") -> None:
     rows = self._read_csv(self.files[filename])
@@ -240,9 +250,9 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(bridge_movie_person).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_movie_id", "sk_person_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(
+      bridge_movie_person, values, ["sk_movie_id", "sk_person_id"]
+    )
 
   async def seed_bridge_movie_genre(self, filename:str = "bridge_movie_genre") -> None:
     rows = self._read_csv(self.files[filename])
@@ -259,9 +269,9 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(bridge_movie_genre).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_movie_id", "sk_genre_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(
+      bridge_movie_genre, values, ["sk_movie_id", "sk_genre_id"]
+    )
 
   async def seed_bridge_movie_company(self, filename:str = "bridge_movie_company") -> None:
     rows = self._read_csv(self.files[filename])
@@ -278,6 +288,6 @@ class Seeder():
       for row in rows
     ]
 
-    stmt = sqlite_insert(bridge_movie_company).values(values)
-    stmt = stmt.on_conflict_do_nothing(index_elements=["sk_movie_id", "sk_company_id"])
-    await self.session.execute(stmt)
+    await self._insert_in_batches(
+      bridge_movie_company, values, ["sk_movie_id", "sk_company_id"]
+    )

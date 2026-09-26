@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     database_url: str = "sqlite+aiosqlite:///./rocketlab.db"
     backend_cors_origins: list[str] = ["http://localhost:5173"]
-    log_level: str = "INFO"
+    log_level: str = "WARNING"
 
 
 @lru_cache
