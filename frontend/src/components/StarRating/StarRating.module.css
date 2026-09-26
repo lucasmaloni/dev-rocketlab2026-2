@@ -1,0 +1,8 @@
+.rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  color: var(--star);
+}
