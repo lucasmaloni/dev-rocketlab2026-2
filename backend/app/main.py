@@ -3,18 +3,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api.v1.router import api_router
+from app.api.router import api_router
+from app.api.routes.health import health_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.db.seed.seeder import Seeder
-from app.db.session import engine
 
 configure_logging()
 settings = get_settings()
 
-async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 SEEDING_ENABLED = False
 
 @asynccontextmanager
@@ -23,8 +21,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     del app
     if SEEDING_ENABLED:
+        from app.db.session import AsyncSessionLocal
         
-        async with async_session_factory() as session:
+        async with AsyncSessionLocal() as session:
             seeder = Seeder(session)
             await seeder.seed_movies()
             await seeder.seed_genres()
@@ -39,6 +38,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await session.commit()
 
     yield
+    from app.db.session import engine
     await engine.dispose()
 
 
@@ -56,17 +56,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.include_router(health_router)
     app.include_router(api_router, prefix=settings.api_v1_prefix)
-
-    @app.get("/health", tags=["health"])
-    async def health_check() -> dict[str, str]:
-        return {"status": "ok"}
-
-    @app.get("/db_health", tags=["db_health"])
-    async def db_health_check() -> dict[str, str]:
-        async with async_session_factory() as session:
-            await session.execute(text("SELECT 1"))
-        return {"status": "ok"}
 
     return app
 
