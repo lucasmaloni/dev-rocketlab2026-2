@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
 
 class Movie(BaseModel):
@@ -27,9 +27,9 @@ class MoviePerformance(BaseModel):
 
 class MovieCatalogItem(BaseModel):
   ''' Item a ser enviado para catalogar os filmes no banco. Apenas informações chave'''
-  # dim_movies
-  sk_movie_id: str
+  sk_movie_id: str = Field(..., alias="skMovieId", serialization_alias="skMovieId")
   titulo: str
-  posterUrl: str | None
-  # fact_movie_performance
-  notamedia: float
+  poster_url: str | None = Field(default=None, alias="posterUrl", serialization_alias="posterUrl")
+  nota_media: float | None = Field(default=None, alias="notaMedia", serialization_alias="notaMedia")
+
+  model_config = ConfigDict(populate_by_name=True)
