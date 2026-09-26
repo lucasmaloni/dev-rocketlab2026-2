@@ -9,13 +9,12 @@ function MovieCard({
 }: {
   movieCatalogItem : MovieCatalogItem
 }) {
-  // nota_tmdb vem na escala de 0 a 10; StarRating espera de 0 a 5.
   const starValue = movieCatalogItem.notaMedia
     ? Math.round(movieCatalogItem.notaMedia)
     : 0;
   
   const posterUrl = movieCatalogItem.posterUrl
-    ? movieCatalogItem.posterUrl : movieCatalogItem.titulo
+    ? movieCatalogItem.posterUrl : movieCatalogItem.titulo;
   
   return (
     <div className={styles.card}>

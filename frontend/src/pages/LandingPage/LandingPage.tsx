@@ -24,7 +24,7 @@ const mockMovie: MovieCatalogItem = {
   titulo: "Evangelion: 3.0+1.0 Thrice Upon a Time",
   posterUrl: "https://m.media-amazon.com/images/M/MV5BNWYzOTRlYzItMmM5Ni00NjQxLWIwYjUtYTFhYTVhOWRhYWEyXkEyXkFqcGc@._V1_QL75_UY281_CR11,0,190,281_.jpg",
   notaMedia: 4.0
-}
+};
 
 const icons: { name: string; Icon: LucideIcon }[] = [
   { name: "X", Icon: X },

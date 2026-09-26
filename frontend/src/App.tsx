@@ -1,12 +1,13 @@
-import LandingPage from './pages/LandingPage/LandingPage'
+import CatalogPage from "./pages/CatalogPage/CatalogPage";
+//import LandingPage from './pages/LandingPage/LandingPage'
 
 function App() {
 
   return (
     <>
-      <LandingPage/>
+      <CatalogPage/>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
