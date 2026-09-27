@@ -25,19 +25,3 @@
   align-items: center;
   gap: var(--space-2);
 }
-
-.iconView {
-  color: var(--primary);
-}
-
-.iconEdit {
-  color: var(--accent);
-}
-
-.iconDelete {
-  color: var(--star);
-}
-
-.actions button:hover .iconView {
-  color: var(--primary-hover);
-}

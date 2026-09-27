@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft, Eye, Trash, Pencil } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import PosterFrame from "../../components/PosterFrame/PosterFrame";
@@ -57,9 +57,30 @@ export default function MoviePage() {
         >
           <ArrowLeft size={22} />
         </button>
-        <button className="btn-icon" aria-label="Abrir menu principal">
-          <Menu size={24} />
-        </button>
+        <div className={styles.actions}>
+          <button 
+            className="btn-icon"
+            type="button"
+            aria-label="Registrar avaliação de filme"
+          >
+            <Eye size={22} className={styles.iconView} />
+          </button>
+
+          <button
+            className="btn-icon"
+            type="button"
+            aria-label="Editar filme cadastrado"
+          >
+            <Pencil size={22} className={styles.iconEdit} />
+          </button>
+
+          <button
+            className="btn-icon"
+            type="button"
+            aria-label="Excluir filme cadastrado">
+              <Trash size={22} className={styles.iconDelete} />
+          </button>
+        </div>
       </header>
 
       <main className={styles.mainContent}>

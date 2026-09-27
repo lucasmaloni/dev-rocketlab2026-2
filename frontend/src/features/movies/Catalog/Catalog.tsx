@@ -1,4 +1,4 @@
-import { Funnel, Eye, Trash, Pencil } from "lucide-react";
+import { Funnel } from "lucide-react";
 import MovieCard from "../MovieCard/MovieCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import type { MovieCatalogItem } from "../../../types/movieCatalogItem";
@@ -26,32 +26,7 @@ function Catalog({
   return (
     <>
       <header className={styles.header}>
-
-        <div className={styles.actions}>
-          <h2>Catálogo de Filmes</h2>
-          <button 
-            className="btn-icon"
-            type="button"
-            aria-label="Registrar avaliação de filme"
-          >
-            <Eye size={22} className={styles.iconView} />
-          </button>
-
-          <button
-            className="btn-icon"
-            type="button"
-            aria-label="Editar filme cadastrado"
-          >
-            <Pencil size={22} className={styles.iconEdit} />
-          </button>
-
-          <button
-            className="btn-icon"
-            type="button"
-            aria-label="Excluir filme cadastrado">
-              <Trash size={22} className={styles.iconDelete} />
-          </button>
-        </div>
+        <h2>Catálogo de Filmes</h2>
 
         <div className={styles.actions}>
           <button
