@@ -15,6 +15,7 @@ from app.dto.movies import (
     MoviePerformance,
 )
 from app.dto.person import Person
+from app.dto.review import Review
 from app.movies.models import DimMovie, FactMoviePerformance
 
 movies_router = APIRouter()
@@ -117,6 +118,7 @@ async def get_movie_details(
             selectinload(DimMovie.performance),
             selectinload(DimMovie.genres),
             selectinload(DimMovie.people),
+            selectinload(DimMovie.reviews),
         )
         .where(DimMovie.sk_movie_id == sk_movie_id)
     )
@@ -173,6 +175,14 @@ async def get_movie_details(
         (person for person in people if person.tipo_pessoa in {"Diretor", "Roteirista"}),
         key=lambda person: person.nome_pessoa.casefold(),
     )
+    reviews = [
+        Review(nome=review.nome, comentario=review.comentario, nota=review.nota)
+        for review in sorted(
+            movie.reviews,
+            key=lambda review: review.created_at,
+            reverse=True,
+        )
+    ]
 
     return MovieDetailsResponse(
         movie=movie_response,
@@ -180,4 +190,5 @@ async def get_movie_details(
         genres=[GenreName(name=genre.nome_genero) for genre in movie.genres],
         cast=cast,
         crew=crew,
+        reviews=reviews,
     )
