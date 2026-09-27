@@ -1,19 +1,16 @@
 import { Clapperboard, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+
 import Catalog from "../../features/movies/Catalog/Catalog";
 import { useMovies } from "../../features/movies/useMovies";
 import styles from "./CatalogPage.module.css";
 
 function CatalogPage() {
-  const {
-    movies,
-    currentPage,
-    totalPages,
-    isLoading,
-    error,
-    nextPage,
-    prevPage,
-    refetch,
-  } = useMovies();
+  const [page, setPage] = useState(1);
+  const { movies, currentPage, totalPages, isLoading, error, refetch } = useMovies(page);
+
+  const nextPage = () => setPage((p) => Math.min(p + 1, totalPages));
+  const prevPage = () => setPage((p) => Math.max(p - 1, 1));
 
   return (
     <div className={styles.page}>
@@ -34,7 +31,7 @@ function CatalogPage() {
           {error ? (
             <div className={styles.feedback}>
               <p>{error}</p>
-              <button className="btn" onClick={refetch}>
+              <button className="btn" onClick={() => refetch()}>
                 Tentar novamente
               </button>
             </div>
