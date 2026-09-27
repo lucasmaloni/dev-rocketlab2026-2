@@ -1,10 +1,12 @@
 import math
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
+from app.dto.company import Company
 from app.dto.genre import GenreName
 from app.dto.movies import (
     Movie,
@@ -13,6 +15,8 @@ from app.dto.movies import (
     MovieDetailsResponse,
     MoviePerformance,
 )
+from app.dto.person import Person
+from app.dto.review import Review
 from app.movies.models import DimMovie, FactMoviePerformance
 
 movies_router = APIRouter()
@@ -23,7 +27,12 @@ MAX_PAGE_SIZE = 80
 @movies_router.get("/catalog/{page}", response_model=MovieCatalogResponse)
 async def get_movie_catalog(
     page: int = Path(ge=1, description="Número da página (iniciando em 1)"),
-    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE, description="Quantidade por página"),
+    page_size: int = Query(
+        default=DEFAULT_PAGE_SIZE,
+        ge=1,
+        le=MAX_PAGE_SIZE,
+        description="Quantidade por página",
+    ),
     session: AsyncSession = Depends(get_db),
 ) -> MovieCatalogResponse:
     """Retorna os filmes paginados para o catálogo com metadados de total de páginas."""
@@ -87,7 +96,12 @@ async def get_movie_catalog(
 
 @movies_router.get("/catalog", response_model=MovieCatalogResponse)
 async def get_movie_catalog_default(
-    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE, description="Quantidade por página"),
+    page_size: int = Query(
+        default=DEFAULT_PAGE_SIZE,
+        ge=1,
+        le=MAX_PAGE_SIZE,
+        description="Quantidade por página",
+    ),
     session: AsyncSession = Depends(get_db),
 ) -> MovieCatalogResponse:
     """Atalho para obter a primeira página do catálogo."""
@@ -101,7 +115,13 @@ async def get_movie_details(
 ) -> MovieDetailsResponse:
     stmt = (
         select(DimMovie)
-        .options(selectinload(DimMovie.performance), selectinload(DimMovie.genres))
+        .options(
+            selectinload(DimMovie.performance),
+            selectinload(DimMovie.genres),
+            selectinload(DimMovie.people),
+            selectinload(DimMovie.reviews),
+            selectinload(DimMovie.companies),
+        )
         .where(DimMovie.sk_movie_id == sk_movie_id)
     )
     result = await session.execute(stmt)
@@ -141,8 +161,44 @@ async def get_movie_details(
             qtd_imdb=performance.qtd_imdb,
         )
 
+    people = [
+        Person(
+            sk_person_id=person.sk_person_id,
+            nome_pessoa=person.nome_pessoa,
+            tipo_pessoa=person.tipo_pessoa,
+        )
+        for person in movie.people
+    ]
+    cast = sorted(
+        (person for person in people if person.tipo_pessoa == "Ator"),
+        key=lambda person: person.nome_pessoa.casefold(),
+    )
+    crew = sorted(
+        (person for person in people if person.tipo_pessoa in {"Diretor", "Roteirista"}),
+        key=lambda person: person.nome_pessoa.casefold(),
+    )
+    reviews = [
+        Review(nome=review.nome, comentario=review.comentario, nota=review.nota)
+        for review in sorted(
+            movie.reviews,
+            key=lambda review: review.created_at,
+            reverse=True,
+        )
+    ]
+    companies = [
+        Company(
+            sk_company_id=company.sk_company_id,
+            nome_produtora=company.nome_produtora,
+        )
+        for company in movie.companies
+    ]
+
     return MovieDetailsResponse(
         movie=movie_response,
         performance=performance_response,
         genres=[GenreName(name=genre.nome_genero) for genre in movie.genres],
+        cast=cast,
+        crew=crew,
+        reviews=reviews,
+        companies=companies,
     )
