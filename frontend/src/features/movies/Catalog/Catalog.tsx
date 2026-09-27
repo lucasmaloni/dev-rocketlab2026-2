@@ -1,6 +1,6 @@
 import { Funnel } from "lucide-react";
 import MovieCard from "../MovieCard/MovieCard";
-import type { MovieCatalogItem } from "../../types/movieCatalogItem";
+import type { MovieCatalogItem } from "../../../types/movieCatalogItem";
 import styles from "./Catalog.module.css";
 
 function Catalog({ movies }: { movies: MovieCatalogItem[] }) {

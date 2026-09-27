@@ -1,7 +1,7 @@
 import { Info } from "lucide-react";
-import PosterFrame from "../../components/PosterFrame/PosterFrame";
-import StarRating from "../../components/StarRating/StarRating";
-import type { MovieCatalogItem } from "../../types/movieCatalogItem";
+import PosterFrame from "../../../components/PosterFrame/PosterFrame";
+import StarRating from "../../../components/StarRating/StarRating";
+import type { MovieCatalogItem } from "../../../types/movieCatalogItem";
 import styles from "./MovieCard.module.css";
 
 function MovieCard({
@@ -9,9 +9,7 @@ function MovieCard({
 }: {
   movieCatalogItem : MovieCatalogItem
 }) {
-  const starValue = movieCatalogItem.notaMedia
-    ? Math.round(movieCatalogItem.notaMedia)
-    : 0;
+  const starValue = movieCatalogItem.notaMedia ?? 0;
   
   const posterUrl = movieCatalogItem.posterUrl
     ? movieCatalogItem.posterUrl : movieCatalogItem.titulo;

@@ -11,8 +11,10 @@
 
 .catalog {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  column-gap: var(--space-3);
+  row-gap: var(--space-4);
+  justify-items: center;
   padding: var(--space-4);
   background: var(--bg);
 }
