@@ -1,12 +1,11 @@
 export interface Movie {
-  skMovieId: string;
+  sk_movie_id: string;
   id: string;
   titulo: string;
-  dataLancamento: string | Date;
-  anoLancamento: number;
-  duracaoMinutos: number;
-  statusFilme: string;
-  sinopse: string;
-  posterUrl: string;
-  backdropUrl: string | null;
+  data_lancamento: string | null;
+  ano_lancamento: number | null;
+  status_filme: string | null;
+  sinopse: string | null;
+  poster_url: string | null;
+  backdrop_url: string | null;
 }

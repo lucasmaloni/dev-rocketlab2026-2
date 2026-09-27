@@ -4,6 +4,6 @@ import type { MoviePerformance } from "./moviePerformance";
 
 export interface MovieDetails {
   movie: Movie;
-  performance: MoviePerformance;
+  performance: MoviePerformance | null;
   genres: Genre[];
 }

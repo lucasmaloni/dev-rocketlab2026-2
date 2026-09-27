@@ -1,0 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
+import { getMovieDetails } from "../../api/movies";
+
+export function useMovieDetails(skMovieId?: string) {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["movie", skMovieId],
+    queryFn: ({ signal }) => getMovieDetails(skMovieId as string, signal),
+    enabled: Boolean(skMovieId),
+  });
+
+  return {
+    movie: data?.movie ?? null,
+    performance: data?.performance ?? null,
+    genres: data?.genres ?? [],
+    isLoading,
+    error: error instanceof Error ? error.message : null,
+    refetch,
+  };
+}
