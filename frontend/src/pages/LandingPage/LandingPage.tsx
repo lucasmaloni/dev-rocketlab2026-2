@@ -15,7 +15,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
-import MovieCard from "../../features/MovieCard/MovieCard";
+import MovieCard from "../../features/movies/MovieCard/MovieCard";
 import styles from "./LandingPage.module.css";
 import type { MovieCatalogItem } from "../../types/movieCatalogItem";
 

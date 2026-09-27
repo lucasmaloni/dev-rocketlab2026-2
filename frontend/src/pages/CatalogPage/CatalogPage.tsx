@@ -1,17 +1,21 @@
 import { Clapperboard, Menu, ChevronLeft, ChevronRight } from "lucide-react";
-import Catalog from "../../features/Catalog/Catalog";
+import Catalog from "../../features/movies/Catalog/Catalog";
+import { useMovies } from "../../features/movies/useMovies";
 import styles from "./CatalogPage.module.css";
-import type { MovieCatalogItem } from "../../types/movieCatalogItem";
 
-const mockMovie: MovieCatalogItem = {
-  skMovieId: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
-  titulo: "Evangelion: 3.0+1.0 Thrice Upon a Time",
-  posterUrl: "https://m.media-amazon.com/images/M/MV5BNWYzOTRlYzItMmM5Ni00NjQxLWIwYjUtYTFhYTVhOWRhYWEyXkEyXkFqcGc@._V1_QL75_UY281_CR11,0,190,281_.jpg",
-  notaMedia: 4.0
-};
+function CatalogPage() {
+  const {
+    movies,
+    currentPage,
+    totalPages,
+    isLoading,
+    error,
+    nextPage,
+    prevPage,
+    refetch,
+  } = useMovies();
 
-function CatalogPage(){
-  return(
+  return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={`container ${styles.headerInner}`}>
@@ -27,17 +31,40 @@ function CatalogPage(){
 
       <main className={styles.main}>
         <div className={styles.catalogContainer}>
-          <Catalog movies={[mockMovie]} />
+          {error ? (
+            <div className={styles.feedback}>
+              <p>{error}</p>
+              <button className="btn" onClick={refetch}>
+                Tentar novamente
+              </button>
+            </div>
+          ) : isLoading ? (
+            <div className={styles.feedback}>
+              <p>Carregando filmes...</p>
+            </div>
+          ) : (
+            <Catalog movies={movies} />
+          )}
         </div>
       </main>
 
       <footer className={styles.footer}>
         <div className={`container ${styles.pagination}`}>
-          <button className="btn btn-ghost" aria-label="Página anterior">
+          <button
+            className="btn btn-ghost"
+            aria-label="Página anterior"
+            onClick={prevPage}
+            disabled={isLoading || currentPage <= 1}
+          >
             <ChevronLeft size={18} />
           </button>
-          <span>Página 1 de 5</span>
-          <button className="btn btn-ghost" aria-label="Próxima página">
+          <span>Página {currentPage} de {totalPages}</span>
+          <button
+            className="btn btn-ghost"
+            aria-label="Próxima página"
+            onClick={nextPage}
+            disabled={isLoading || currentPage >= totalPages}
+          >
             <ChevronRight size={18} />
           </button>
         </div>
