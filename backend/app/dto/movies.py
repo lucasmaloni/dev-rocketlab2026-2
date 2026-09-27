@@ -1,16 +1,18 @@
+from app.dto.genre import GenreName
 from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
 
 class Movie(BaseModel):
   ''' Modelo de filme para ser usado na API. Contém informações detalhadas do filme.'''
   sk_movie_id: str
-  id: int
+  id: str
   titulo: str
   data_lancamento: str | None
   ano_lancamento: int | None
   status_filme: str | None
   sinopse: str | None
   poster_url: str | None
+  backdrop_url: str | None
 
 class MoviePerformance(BaseModel):
   sk_movie_id: str
@@ -42,3 +44,9 @@ class MovieCatalogResponse(BaseModel):
   page_size: int = Field(alias="pageSize", serialization_alias="pageSize")
   total_pages: int = Field(alias="totalPages", serialization_alias="totalPages")
   model_config = ConfigDict(populate_by_name=True)
+
+class MovieDetailsResponse(BaseModel):
+  """Envelope de resposta para detalhes do filme."""
+  movie: Movie
+  performance: MoviePerformance | None
+  genres: list[GenreName]

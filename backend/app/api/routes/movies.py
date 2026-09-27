@@ -1,17 +1,24 @@
 import math
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
-from app.dto.movies import MovieCatalogItem, MovieCatalogResponse
+from app.dto.genre import GenreName
+from app.dto.movies import (
+    Movie,
+    MovieCatalogItem,
+    MovieCatalogResponse,
+    MovieDetailsResponse,
+    MoviePerformance,
+)
 from app.movies.models import DimMovie, FactMoviePerformance
 
 movies_router = APIRouter()
 
 DEFAULT_PAGE_SIZE = 40
 MAX_PAGE_SIZE = 80
-
 
 @movies_router.get("/catalog/{page}", response_model=MovieCatalogResponse)
 async def get_movie_catalog(
@@ -85,3 +92,57 @@ async def get_movie_catalog_default(
 ) -> MovieCatalogResponse:
     """Atalho para obter a primeira página do catálogo."""
     return await get_movie_catalog(page=1, page_size=page_size, session=session)
+
+
+@movies_router.get("/{sk_movie_id}", response_model=MovieDetailsResponse)
+async def get_movie_details(
+    sk_movie_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> MovieDetailsResponse:
+    stmt = (
+        select(DimMovie)
+        .options(selectinload(DimMovie.performance), selectinload(DimMovie.genres))
+        .where(DimMovie.sk_movie_id == sk_movie_id)
+    )
+    result = await session.execute(stmt)
+    movie = result.scalar_one_or_none()
+
+    if movie is None:
+        raise HTTPException(status_code=404, detail="Filme não encontrado")
+
+    movie_response = Movie(
+        sk_movie_id=movie.sk_movie_id,
+        id=movie.id_filme,
+        titulo=movie.titulo,
+        data_lancamento=(
+            movie.data_lancamento.isoformat() if movie.data_lancamento is not None else None
+        ),
+        ano_lancamento=movie.ano_lancamento,
+        status_filme=movie.status_filme,
+        sinopse=movie.sinopse,
+        poster_url=movie.url_poster,
+        backdrop_url=movie.url_backdrop,
+    )
+
+    performance_response = None
+    if movie.performance is not None:
+        performance = movie.performance
+        performance_response = MoviePerformance(
+            sk_movie_id=performance.sk_movie_id,
+            orcamento_usd=performance.orcamento_usd,
+            receita_usd=performance.receita_usd,
+            orcamento_brl=performance.orcamento_brl,
+            receita_brl=performance.receita_brl,
+            lucro_brl=performance.lucro_brl,
+            popularidade=performance.popularidade,
+            nota_tmdb=performance.nota_tmdb,
+            qtd_tmdb=performance.qtd_tmdb,
+            nota_imdb=performance.nota_imdb,
+            qtd_imdb=performance.qtd_imdb,
+        )
+
+    return MovieDetailsResponse(
+        movie=movie_response,
+        performance=performance_response,
+        genres=[GenreName(name=genre.nome_genero) for genre in movie.genres],
+    )
