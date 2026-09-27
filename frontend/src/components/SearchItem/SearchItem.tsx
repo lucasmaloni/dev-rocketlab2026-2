@@ -12,7 +12,7 @@ function SearchItem({ movie, onSelect }: SearchItemProps) {
 		<button className={styles.item} type="button" onClick={onSelect} role="option">
 			<PosterFrame
 				src={movie.posterUrl ?? ""}
-				alt={`Pôster de ${movie.titulo}`}
+				alt={movie.titulo}
 				size={42}
 			/>
 			<span>{movie.titulo}</span>
