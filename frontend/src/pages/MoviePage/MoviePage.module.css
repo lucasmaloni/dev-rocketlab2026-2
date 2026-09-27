@@ -220,6 +220,38 @@
   padding: var(--space-3) 0;
 }
 
+.peopleList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.personItem {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.personItem strong {
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personItem span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 /* Feedback de Loading/Erro */
 .feedback {
   display: flex;

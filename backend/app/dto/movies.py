@@ -1,6 +1,10 @@
-from app.dto.genre import GenreName
-from pydantic import BaseModel, ConfigDict, Field
 from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.dto.genre import GenreName
+from app.dto.person import Person
+
 
 class Movie(BaseModel):
   ''' Modelo de filme para ser usado na API. Contém informações detalhadas do filme.'''
@@ -50,3 +54,5 @@ class MovieDetailsResponse(BaseModel):
   movie: Movie
   performance: MoviePerformance | None
   genres: list[GenreName]
+  cast: list[Person]
+  crew: list[Person]

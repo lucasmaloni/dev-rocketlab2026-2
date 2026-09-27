@@ -12,7 +12,7 @@ type TabType = "cast" | "crew" | "details" | "genres" | "releases" | "reviews";
 export default function MoviePage() {
   const { skMovieId } = useParams<{ skMovieId: string }>();
   const navigate = useNavigate();
-  const { movie, performance, genres, isLoading, error, refetch } = useMovieDetails(skMovieId);
+  const { movie, performance, genres, cast, crew, isLoading, error, refetch } = useMovieDetails(skMovieId);
   const [activeTab, setActiveTab] = useState<TabType>("cast");
 
   const rating = performance?.nota_tmdb ?? performance?.nota_imdb;
@@ -122,11 +122,33 @@ export default function MoviePage() {
 
                 <div className={styles.tabContent} role="tabpanel">
                   {activeTab === "cast" && (
-                     <p className={styles.emptyState}>O elenco será integrado nesta aba quando disponível no modelo de dados.</p>
+                    cast.length > 0 ? (
+                      <ul className={styles.peopleList}>
+                        {cast.map((person) => (
+                          <li key={person.sk_person_id} className={styles.personItem}>
+                            <strong>{person.nome_pessoa}</strong>
+                            <span>{person.tipo_pessoa}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.emptyState}>Nenhum ator associado a este filme.</p>
+                    )
                   )}
                   
                   {activeTab === "crew" && (
-                    <p className={styles.emptyState}>A equipe técnica será integrada nesta aba quando disponível no modelo de dados.</p>
+                    crew.length > 0 ? (
+                      <ul className={styles.peopleList}>
+                        {crew.map((person) => (
+                          <li key={person.sk_person_id} className={styles.personItem}>
+                            <strong>{person.nome_pessoa}</strong>
+                            <span>{person.tipo_pessoa}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className={styles.emptyState}>Nenhum membro da equipe associado a este filme.</p>
+                    )
                   )}
 
                   {activeTab === "releases" && (
