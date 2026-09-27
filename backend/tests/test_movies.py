@@ -12,10 +12,15 @@ async def test_get_movie_catalog_page_1() -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) == 5
+    assert isinstance(data, dict)
+    assert "items" in data
+    assert "total" in data
+    assert "totalPages" in data
+    assert data["total"] > 0
+    assert data["totalPages"] > 0
+    assert len(data["items"]) == 5
 
-    item = data[0]
+    item = data["items"][0]
     assert "skMovieId" in item
     assert "titulo" in item
     assert "posterUrl" in item
@@ -33,7 +38,8 @@ async def test_get_movie_catalog_default_route() -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 5
+    assert isinstance(data, dict)
+    assert len(data["items"]) == 5
 
 
 @pytest.mark.asyncio
@@ -46,8 +52,8 @@ async def test_get_movie_catalog_pagination_differs() -> None:
     assert res1.status_code == 200
     assert res2.status_code == 200
 
-    ids1 = [item["skMovieId"] for item in res1.json()]
-    ids2 = [item["skMovieId"] for item in res2.json()]
+    ids1 = [item["skMovieId"] for item in res1.json()["items"]]
+    ids2 = [item["skMovieId"] for item in res2.json()["items"]]
 
     # Ensure pages don't return the same elements
     assert set(ids1).isdisjoint(set(ids2))

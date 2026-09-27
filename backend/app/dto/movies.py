@@ -33,3 +33,12 @@ class MovieCatalogItem(BaseModel):
   nota_media: float | None = Field(default=None, alias="notaMedia", serialization_alias="notaMedia")
 
   model_config = ConfigDict(populate_by_name=True)
+
+class MovieCatalogResponse(BaseModel):
+  """Envelope de resposta para o catálogo com dados de paginação dinâmicos."""
+  items: list[MovieCatalogItem]
+  total: int
+  page: int
+  page_size: int = Field(alias="pageSize", serialization_alias="pageSize")
+  total_pages: int = Field(alias="totalPages", serialization_alias="totalPages")
+  model_config = ConfigDict(populate_by_name=True)
