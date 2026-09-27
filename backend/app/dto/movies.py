@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.dto.company import Company
 from app.dto.genre import GenreName
 from app.dto.person import Person
 from app.dto.review import Review
@@ -58,3 +59,4 @@ class MovieDetailsResponse(BaseModel):
   cast: list[Person]
   crew: list[Person]
   reviews: list[Review]
+  companies: list[Company]

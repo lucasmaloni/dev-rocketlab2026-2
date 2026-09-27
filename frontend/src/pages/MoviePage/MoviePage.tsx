@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import PosterFrame from "../../components/PosterFrame/PosterFrame";
 import StarRating from "../../components/StarRating/StarRating";
+import ReleaseInfo from "../../features/movies/ReleaseInfo/ReleaseInfo";
 import { useMovieDetails } from "../../features/movies/useMovieDetails";
 import ReviewList from "../../features/movies/ReviewList/ReviewList";
 import styles from "./MoviePage.module.css";
@@ -13,7 +14,7 @@ type TabType = "cast" | "crew" | "details" | "genres" | "releases" | "reviews";
 export default function MoviePage() {
   const { skMovieId } = useParams<{ skMovieId: string }>();
   const navigate = useNavigate();
-  const { movie, performance, genres, cast, crew, reviews, isLoading, error, refetch } = useMovieDetails(skMovieId);
+  const { movie, performance, genres, cast, crew, reviews, companies, isLoading, error, refetch } = useMovieDetails(skMovieId);
   const [activeTab, setActiveTab] = useState<TabType>("cast");
 
   const rating = performance?.nota_tmdb ?? performance?.nota_imdb;
@@ -153,7 +154,11 @@ export default function MoviePage() {
                   )}
 
                   {activeTab === "releases" && (
-                    <p className={styles.emptyState}>O calendário de lançamentos será integrado nesta aba quando disponível no modelo de dados.</p>
+                    <ReleaseInfo
+                      date={movie.data_lancamento}
+                      status={movie.status_filme}
+                      companies={companies}
+                    />
                   )}
 
                   {activeTab === "reviews" && <ReviewList reviews={reviews} />}

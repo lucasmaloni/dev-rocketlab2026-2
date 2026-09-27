@@ -1,4 +1,5 @@
 import type { Genre } from "./genre";
+import type { Company } from "./company";
 import type { Movie } from "./movie";
 import type { MoviePerformance } from "./moviePerformance";
 import type { Person } from "./person";
@@ -11,4 +12,5 @@ export interface MovieDetails {
   cast: Person[];
   crew: Person[];
   reviews: Review[];
+  companies: Company[];
 }

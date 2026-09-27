@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
+from app.dto.company import Company
 from app.dto.genre import GenreName
 from app.dto.movies import (
     Movie,
@@ -119,6 +120,7 @@ async def get_movie_details(
             selectinload(DimMovie.genres),
             selectinload(DimMovie.people),
             selectinload(DimMovie.reviews),
+            selectinload(DimMovie.companies),
         )
         .where(DimMovie.sk_movie_id == sk_movie_id)
     )
@@ -183,6 +185,13 @@ async def get_movie_details(
             reverse=True,
         )
     ]
+    companies = [
+        Company(
+            sk_company_id=company.sk_company_id,
+            nome_produtora=company.nome_produtora,
+        )
+        for company in movie.companies
+    ]
 
     return MovieDetailsResponse(
         movie=movie_response,
@@ -191,4 +200,5 @@ async def get_movie_details(
         cast=cast,
         crew=crew,
         reviews=reviews,
+        companies=companies,
     )

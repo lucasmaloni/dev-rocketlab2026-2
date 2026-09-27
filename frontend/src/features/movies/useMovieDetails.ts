@@ -15,6 +15,7 @@ export function useMovieDetails(skMovieId?: string) {
     cast: data?.cast ?? [],
     crew: data?.crew ?? [],
     reviews: data?.reviews ?? [],
+    companies: data?.companies ?? [],
     isLoading,
     error: error instanceof Error ? error.message : null,
     refetch,
