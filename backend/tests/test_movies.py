@@ -66,3 +66,40 @@ async def test_get_movie_catalog_invalid_page() -> None:
         response = await client.get("/api/v1/movies/catalog/0")
 
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_get_movie_catalog_search_filters_titles() -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/movies/catalog/1?q=star%20wars&page_size=40")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] > 5
+    assert len(data["items"]) == data["total"]
+    assert all("star wars" in item["titulo"].lower() for item in data["items"])
+
+
+@pytest.mark.asyncio
+async def test_get_movie_catalog_search_ignores_accents() -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/movies/catalog/1?q=acao&page_size=40")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] > 0
+    assert len(data["items"]) == data["total"]
+
+
+@pytest.mark.asyncio
+async def test_get_movie_catalog_search_suggestion_page_size_is_independent() -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/movies/catalog/1?q=star%20wars&page_size=5")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] > data["pageSize"]
+    assert len(data["items"]) == 5

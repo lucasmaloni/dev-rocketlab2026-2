@@ -4,7 +4,25 @@ import SearchBar from "../../../components/SearchBar/SearchBar";
 import type { MovieCatalogItem } from "../../../types/movieCatalogItem";
 import styles from "./Catalog.module.css";
 
-function Catalog({ movies }: { movies: MovieCatalogItem[] }) {
+interface CatalogProps {
+  movies: MovieCatalogItem[];
+  searchValue: string;
+  suggestions: MovieCatalogItem[];
+  suggestionsLoading: boolean;
+  onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
+  onSearchSelect: (movie: MovieCatalogItem) => void;
+}
+
+function Catalog({
+  movies,
+  searchValue,
+  suggestions,
+  suggestionsLoading,
+  onSearchChange,
+  onSearchSubmit,
+  onSearchSelect,
+}: CatalogProps) {
   return (
     <>
       <header className={styles.header}>
@@ -18,7 +36,16 @@ function Catalog({ movies }: { movies: MovieCatalogItem[] }) {
           >
             <Funnel size={22} />
           </button>
-          <SearchBar placeholder="Buscar filmes..." size={18}/>
+          <SearchBar
+            placeholder="Buscar filmes..."
+            size={18}
+            value={searchValue}
+            suggestions={suggestions}
+            suggestionsLoading={suggestionsLoading}
+            onChange={onSearchChange}
+            onSubmit={onSearchSubmit}
+            onSelect={onSearchSelect}
+          />
         </div>
       </header>
       <div className={styles.catalog}>

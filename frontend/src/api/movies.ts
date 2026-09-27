@@ -4,9 +4,15 @@ import type { MovieDetails } from "../types/movieDetail";
 
 export const getMovies = async (
   page: number = 1,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  query?: string,
+  pageSize?: number,
 ): Promise<MovieCatalogResponse> => {
   const response = await client.get<MovieCatalogResponse>(`/movies/catalog/${page}`, {
+    params: {
+      q: query || undefined,
+      page_size: pageSize,
+    },
     signal,
   });
   return response.data;

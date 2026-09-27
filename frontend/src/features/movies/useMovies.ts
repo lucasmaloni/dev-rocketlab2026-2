@@ -1,11 +1,17 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getMovies } from "../../api/movies";
 
-export function useMovies(page: number) {
+export function useMovies(
+  page: number,
+  query = "",
+  pageSize?: number,
+  enabled = true,
+) {
   const { data, isLoading, isPlaceholderData, error, refetch } = useQuery({
-    queryKey: ["movies", page],
-    queryFn: ({ signal }) => getMovies(page, signal),
-    placeholderData: keepPreviousData, // mantém a página anterior visível durante o load
+    queryKey: ["movies", page, query, pageSize],
+    queryFn: ({ signal }) => getMovies(page, signal, query, pageSize),
+    enabled,
+    placeholderData: keepPreviousData,
   });
 
   return {

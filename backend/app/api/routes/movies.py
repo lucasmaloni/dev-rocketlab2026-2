@@ -1,4 +1,5 @@
 import math
+import unicodedata
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import case, func, select
@@ -24,6 +25,29 @@ movies_router = APIRouter()
 DEFAULT_PAGE_SIZE = 40
 MAX_PAGE_SIZE = 80
 
+
+def _normalize_search_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    without_accents = "".join(
+        character for character in normalized if not unicodedata.combining(character)
+    )
+    return without_accents.lower()
+
+
+def _normalized_title_expression():
+    expression = func.lower(DimMovie.titulo)
+    replacements = {
+        "á": "a", "à": "a", "ã": "a", "â": "a", "ä": "a",
+        "é": "e", "è": "e", "ê": "e", "ë": "e",
+        "í": "i", "ì": "i", "î": "i", "ï": "i",
+        "ó": "o", "ò": "o", "õ": "o", "ô": "o", "ö": "o",
+        "ú": "u", "ù": "u", "û": "u", "ü": "u",
+        "ç": "c",
+    }
+    for source, target in replacements.items():
+        expression = func.replace(expression, source, target)
+    return expression
+
 @movies_router.get("/catalog/{page}", response_model=MovieCatalogResponse)
 async def get_movie_catalog(
     page: int = Path(ge=1, description="Número da página (iniciando em 1)"),
@@ -33,13 +57,20 @@ async def get_movie_catalog(
         le=MAX_PAGE_SIZE,
         description="Quantidade por página",
     ),
+    q: str | None = Query(default=None, description="Termo para buscar no título"),
     session: AsyncSession = Depends(get_db),
 ) -> MovieCatalogResponse:
     """Retorna os filmes paginados para o catálogo com metadados de total de páginas."""
     offset = (page - 1) * page_size
 
-    # Contagem total de filmes cadastrados
+    search_term = _normalize_search_text(q.strip()) if q and q.strip() else None
+    movie_filter = (
+        _normalized_title_expression().contains(search_term) if search_term else None
+    )
+
     count_stmt = select(func.count()).select_from(DimMovie)
+    if movie_filter is not None:
+        count_stmt = count_stmt.where(movie_filter)
     total_result = await session.execute(count_stmt)
     total_movies = total_result.scalar() or 0
 
@@ -71,6 +102,8 @@ async def get_movie_catalog(
         .offset(offset)
         .limit(page_size)
     )
+    if movie_filter is not None:
+        stmt = stmt.where(movie_filter)
 
     result = await session.execute(stmt)
     rows = result.all()
@@ -102,10 +135,11 @@ async def get_movie_catalog_default(
         le=MAX_PAGE_SIZE,
         description="Quantidade por página",
     ),
+    q: str | None = Query(default=None, description="Termo para buscar no título"),
     session: AsyncSession = Depends(get_db),
 ) -> MovieCatalogResponse:
     """Atalho para obter a primeira página do catálogo."""
-    return await get_movie_catalog(page=1, page_size=page_size, session=session)
+    return await get_movie_catalog(page=1, page_size=page_size, q=q, session=session)
 
 
 @movies_router.get("/{sk_movie_id}", response_model=MovieDetailsResponse)

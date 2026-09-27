@@ -1,0 +1,29 @@
+.item {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: var(--space-2);
+	padding: var(--space-2);
+	border: 0;
+	border-bottom: 1px solid var(--border);
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.item:last-child {
+	border-bottom: 0;
+}
+
+.item:hover,
+.item:focus-visible {
+	background: var(--surface-2);
+}
+
+.item span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

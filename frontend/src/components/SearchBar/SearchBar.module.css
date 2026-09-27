@@ -1,6 +1,7 @@
 .search {
   position: relative;
-  max-width: 400px;
+  max-width: 520px;
+  width: 100%;
 }
 
 .searchIcon {
@@ -14,4 +15,26 @@
 
 .search input {
   padding-left: 40px;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  left: 0;
+  z-index: 20;
+  max-height: 270px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.feedback {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
 }

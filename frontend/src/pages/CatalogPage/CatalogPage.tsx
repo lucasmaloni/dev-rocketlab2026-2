@@ -1,5 +1,6 @@
 import { Clapperboard, Menu, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import Catalog from "../../features/movies/Catalog/Catalog";
 import { useMovies } from "../../features/movies/useMovies";
@@ -7,7 +8,39 @@ import styles from "./CatalogPage.module.css";
 
 function CatalogPage() {
   const [page, setPage] = useState(1);
-  const { movies, currentPage, totalPages, isLoading, error, refetch } = useMovies(page);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchValue, setSearchValue] = useState(searchParams.get("q") ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const navigate = useNavigate();
+  const appliedSearch = searchParams.get("q") ?? "";
+  const { movies, currentPage, totalPages, isLoading, error, refetch } = useMovies(
+    page,
+    appliedSearch,
+  );
+  const suggestionsQuery = useMovies(1, debouncedSearch, 5, Boolean(debouncedSearch));
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearchValue(appliedSearch);
+      setPage(1);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [appliedSearch]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(searchValue.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchValue]);
+
+  const submitSearch = () => {
+    const query = searchValue.trim();
+    setPage(1);
+    setSearchParams(query ? { q: query } : {});
+  };
 
   const nextPage = () => setPage((p) => Math.min(p + 1, totalPages));
   const prevPage = () => setPage((p) => Math.max(p - 1, 1));
@@ -40,7 +73,15 @@ function CatalogPage() {
               <p>Carregando filmes...</p>
             </div>
           ) : (
-            <Catalog movies={movies} />
+            <Catalog
+              movies={movies}
+              searchValue={searchValue}
+              suggestions={suggestionsQuery.movies}
+              suggestionsLoading={suggestionsQuery.isLoading}
+              onSearchChange={setSearchValue}
+              onSearchSubmit={submitSearch}
+              onSearchSelect={(movie) => navigate(`/movies/${movie.skMovieId}`)}
+            />
           )}
         </div>
       </main>
