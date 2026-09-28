@@ -1,8 +1,9 @@
 import math
 import unicodedata
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
-from sqlalchemy import case, delete, func, select
+from sqlalchemy import case, delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,6 +14,7 @@ from app.dto.movies import (
     Movie,
     MovieCatalogItem,
     MovieCatalogResponse,
+    MovieCreate,
     MovieDetailsResponse,
     MoviePerformance,
     MovieUpdate,
@@ -22,8 +24,11 @@ from app.dto.review import Review, ReviewSummary
 from app.movies.models import (
     DimGenre,
     DimMovie,
+    DimPerson,
     FactMoviePerformance,
     bridge_movie_genre,
+    bridge_movie_person,
+    generate_surrogate_key,
 )
 
 movies_router = APIRouter()
@@ -53,6 +58,50 @@ def _normalized_title_expression():
     for source, target in replacements.items():
         expression = func.replace(expression, source, target)
     return expression
+
+# Comparação sem diferenciar maiúsculas/acentos. O lado SQL (SQLite lower() só
+# converte ASCII) e o lado Python precisam produzir a mesma chave, por isso
+# ambos usam o mesmo mapa e só baixam a caixa de caracteres ASCII.
+# No SQL a chave é montada em duas etapas (subquery): ~46 replace() aninhados
+# estouram o parser do SQLite, ~24 por expressão funcionam.
+_FOLD_MAP = {
+    "á": "a", "à": "a", "ã": "a", "â": "a", "ä": "a",
+    "é": "e", "è": "e", "ê": "e", "ë": "e",
+    "í": "i", "ì": "i", "î": "i", "ï": "i",
+    "ó": "o", "ò": "o", "õ": "o", "ô": "o", "ö": "o",
+    "ú": "u", "ù": "u", "û": "u", "ü": "u",
+    "ç": "c", "ñ": "n",
+}
+_FOLD_UPPER_MAP = {char.upper(): base for char, base in _FOLD_MAP.items()}
+_FOLD_TABLE = str.maketrans({**_FOLD_MAP, **_FOLD_UPPER_MAP})
+
+
+def _fold_text(value: str) -> str:
+    translated = unicodedata.normalize("NFC", value.strip()).translate(_FOLD_TABLE)
+    return "".join(char.lower() if char.isascii() else char for char in translated)
+
+
+def _cast_candidates_query(folded_names: list[str]):
+    """Atores cuja chave normalizada está em `folded_names`."""
+    stage_one = func.trim(DimPerson.nome_pessoa)
+    for source, target in _FOLD_UPPER_MAP.items():
+        stage_one = func.replace(stage_one, source, target)
+    people = (
+        select(
+            DimPerson.sk_person_id,
+            DimPerson.nome_pessoa,
+            stage_one.label("stage_one"),
+        )
+        .where(DimPerson.tipo_pessoa == "Ator")
+        .subquery()
+    )
+    stage_two = people.c.stage_one
+    for source, target in _FOLD_MAP.items():
+        stage_two = func.replace(stage_two, source, target)
+    return select(people.c.sk_person_id, people.c.nome_pessoa).where(
+        func.lower(stage_two).in_(folded_names)
+    )
+
 
 @movies_router.get("/catalog/{page}", response_model=MovieCatalogResponse)
 async def get_movie_catalog(
@@ -365,3 +414,79 @@ async def delete_movie(
     except Exception:
         await session.rollback()
         raise
+
+
+async def _resolve_cast(session: AsyncSession, names: list[str]) -> list[str]:
+    """Retorna os sk_person_id dos atores, criando os que ainda não existem."""
+    unique_names: dict[str, str] = {}
+    for name in names:
+        unique_names.setdefault(_fold_text(name), name)
+
+    rows = await session.execute(_cast_candidates_query(list(unique_names)))
+    existing: dict[str, str] = {}
+    for sk_person_id, nome_pessoa in rows.all():
+        existing.setdefault(_fold_text(nome_pessoa), sk_person_id)
+
+    person_ids: list[str] = []
+    for key, name in unique_names.items():
+        sk_person_id = existing.get(key)
+        if sk_person_id is None:
+            sk_person_id = generate_surrogate_key()
+            await session.execute(
+                insert(DimPerson).values(
+                    sk_person_id=sk_person_id, nome_pessoa=name, tipo_pessoa="Ator"
+                )
+            )
+        person_ids.append(sk_person_id)
+    return person_ids
+
+
+@movies_router.post(
+    "", response_model=MovieDetailsResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_movie(
+    payload: MovieCreate,
+    session: AsyncSession = Depends(get_db),
+) -> MovieDetailsResponse:
+    """Cadastra um filme, associa gêneros existentes e cria atores inexistentes."""
+    same_date_titles = await session.execute(
+        select(DimMovie.titulo).where(DimMovie.data_lancamento == payload.data_lancamento)
+    )
+    title_key = _fold_text(payload.titulo)
+    if any(_fold_text(title) == title_key for title in same_date_titles.scalars()):
+        raise HTTPException(
+            status_code=409,
+            detail="Já existe um filme com este título e data de lançamento",
+        )
+
+    sk_movie_id = generate_surrogate_key()
+    try:
+        genre_ids = await _ids_to_add(
+            session, DimGenre, DimGenre.sk_genre_id, payload.genre_ids, "Gênero"
+        )
+        await session.execute(
+            insert(DimMovie).values(
+                sk_movie_id=sk_movie_id,
+                id_filme=f"manual-{uuid4().hex}",
+                titulo=payload.titulo,
+                data_lancamento=payload.data_lancamento,
+                ano_lancamento=payload.ano_lancamento,
+                status_filme=payload.status_filme,
+                sinopse=payload.sinopse,
+                url_poster=payload.poster_url,
+                url_backdrop=payload.backdrop_url,
+            )
+        )
+        await _add_relationships(
+            session, sk_movie_id, genre_ids, bridge_movie_genre, "sk_genre_id"
+        )
+        person_ids = await _resolve_cast(session, payload.cast_names)
+        await _add_relationships(
+            session, sk_movie_id, person_ids, bridge_movie_person, "sk_person_id"
+        )
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+
+    return await get_movie_details(sk_movie_id=sk_movie_id, session=session)

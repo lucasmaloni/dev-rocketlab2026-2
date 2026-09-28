@@ -12,6 +12,7 @@ interface CatalogProps {
   onSearchChange: (value: string) => void;
   onSearchSubmit: () => void;
   onSearchSelect: (movie: MovieCatalogItem) => void;
+  onAddMovie: () => void;
 }
 
 function Catalog({
@@ -22,6 +23,7 @@ function Catalog({
   onSearchChange,
   onSearchSubmit,
   onSearchSelect,
+  onAddMovie,
 }: CatalogProps) {
   return (
     <>
@@ -30,9 +32,10 @@ function Catalog({
 
         <div className={styles.actions}>
           <button
-          className="btn-icon"
-          type="button"
-          aria-label="Abrir filtros"
+            className="btn-icon"
+            type="button"
+            aria-label="Cadastrar novo filme"
+            onClick={onAddMovie}
           >
             <Plus size={22} />
           </button>

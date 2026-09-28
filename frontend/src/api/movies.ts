@@ -2,6 +2,7 @@ import client from "./client";
 import type { MovieCatalogResponse } from "../types/movieCatalogResponse";
 import type { MovieDetails } from "../types/movieDetail";
 import type { Genre } from "../types/genre";
+import type { MovieCreatePayload } from "../types/movieCreate";
 import type { MovieUpdatePayload } from "../types/movieUpdate";
 import type { CreateReviewPayload, ReviewCreatedResponse } from "../types/review";
 
@@ -49,6 +50,11 @@ export const updateMovie = async (
   payload: MovieUpdatePayload,
 ): Promise<MovieDetails> => {
   const response = await client.patch<MovieDetails>(`/movies/${skMovieId}`, payload);
+  return response.data;
+};
+
+export const createMovie = async (payload: MovieCreatePayload): Promise<MovieDetails> => {
+  const response = await client.post<MovieDetails>("/movies", payload);
   return response.data;
 };
 

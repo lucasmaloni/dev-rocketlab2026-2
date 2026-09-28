@@ -1,7 +1,9 @@
 from datetime import date
 from decimal import Decimal
+from typing import Literal
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.dto.company import Company
 from app.dto.genre import GenreName
@@ -23,6 +25,59 @@ class MovieUpdate(BaseModel):
     if not value:
       raise ValueError("Título é obrigatório")
     return value
+
+
+MovieStatus = Literal["Lançado", "Anunciado", "Em produção"]
+
+
+class MovieCreate(BaseModel):
+  """Payload para cadastrar um filme. Elenco vira DimPerson (Ator) se não existir."""
+  titulo: str = Field(..., min_length=1, max_length=500)
+  data_lancamento: date
+  ano_lancamento: int
+  status_filme: MovieStatus
+  sinopse: str = Field(..., min_length=1, max_length=4000)
+  genre_ids: list[str] = Field(..., min_length=1)
+  cast_names: list[str] = Field(..., min_length=1)
+  poster_url: str | None = Field(default=None, max_length=2048)
+  backdrop_url: str | None = Field(default=None, max_length=2048)
+
+  @field_validator("titulo", "sinopse")
+  @classmethod
+  def validate_required_text(cls, value: str) -> str:
+    value = value.strip()
+    if not value:
+      raise ValueError("Campo obrigatório")
+    return value
+
+  @field_validator("cast_names")
+  @classmethod
+  def validate_cast_names(cls, value: list[str]) -> list[str]:
+    names = [name.strip() for name in value if name.strip()]
+    if not names:
+      raise ValueError("Informe ao menos um ator")
+    if any(len(name) > 255 for name in names):
+      raise ValueError("Cada nome de ator deve ter até 255 caracteres")
+    return names
+
+  @field_validator("poster_url", "backdrop_url")
+  @classmethod
+  def validate_url(cls, value: str | None) -> str | None:
+    if value is None:
+      return None
+    value = value.strip()
+    if not value:
+      return None
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+      raise ValueError("URL deve começar com http:// ou https://")
+    return value
+
+  @model_validator(mode="after")
+  def validate_year_matches_date(self) -> "MovieCreate":
+    if self.ano_lancamento != self.data_lancamento.year:
+      raise ValueError("Ano de lançamento não corresponde à data de lançamento")
+    return self
 
 
 class Movie(BaseModel):

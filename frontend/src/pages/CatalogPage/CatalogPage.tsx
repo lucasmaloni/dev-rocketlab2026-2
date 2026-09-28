@@ -1,8 +1,9 @@
-import { Clapperboard, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clapperboard, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import Catalog from "../../features/movies/Catalog/Catalog";
+import CreateMovieModal from "../../features/movies/CreateMovieModal/CreateMovieModal";
 import { useMovies } from "../../features/movies/useMovies";
 import styles from "./CatalogPage.module.css";
 
@@ -11,6 +12,7 @@ function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") ?? "");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
   const appliedSearch = searchParams.get("q") ?? "";
   const { movies, currentPage, totalPages, isLoading, error, refetch } = useMovies(
@@ -78,6 +80,7 @@ function CatalogPage() {
               onSearchChange={setSearchValue}
               onSearchSubmit={submitSearch}
               onSearchSelect={(movie) => navigate(`/movies/${movie.skMovieId}`)}
+              onAddMovie={() => setIsCreateModalOpen(true)}
             />
           )}
         </div>
@@ -104,6 +107,10 @@ function CatalogPage() {
           </button>
         </div>
       </footer>
+
+      {isCreateModalOpen && (
+        <CreateMovieModal onClose={() => setIsCreateModalOpen(false)} />
+      )}
     </div>
   );
 }
