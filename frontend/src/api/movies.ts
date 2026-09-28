@@ -1,6 +1,8 @@
 import client from "./client";
 import type { MovieCatalogResponse } from "../types/movieCatalogResponse";
 import type { MovieDetails } from "../types/movieDetail";
+import type { Genre } from "../types/genre";
+import type { MovieUpdatePayload } from "../types/movieUpdate";
 import type { CreateReviewPayload, ReviewCreatedResponse } from "../types/review";
 
 export const getMovies = async (
@@ -41,3 +43,17 @@ export const createMovieReview = async (
   );
   return response.data;
 };
+
+export const updateMovie = async (
+  skMovieId: string,
+  payload: MovieUpdatePayload,
+): Promise<MovieDetails> => {
+  const response = await client.patch<MovieDetails>(`/movies/${skMovieId}`, payload);
+  return response.data;
+};
+
+export const getGenres = async (signal?: AbortSignal): Promise<Genre[]> => {
+  const response = await client.get<Genre[]>("/genres", { signal });
+  return response.data;
+};
+

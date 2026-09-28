@@ -1,11 +1,28 @@
+from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.dto.company import Company
 from app.dto.genre import GenreName
 from app.dto.person import Person
 from app.dto.review import Review, ReviewSummary
+
+
+class MovieUpdate(BaseModel):
+  titulo: str = Field(..., min_length=1, max_length=500)
+  data_lancamento: date
+  status_filme: str | None = Field(default=None, max_length=50)
+  sinopse: str | None = Field(default=None, max_length=4000)
+  genre_ids_to_add: list[str] = Field(default_factory=list)
+
+  @field_validator("titulo")
+  @classmethod
+  def validate_title(cls, value: str) -> str:
+    value = value.strip()
+    if not value:
+      raise ValueError("Título é obrigatório")
+    return value
 
 
 class Movie(BaseModel):

@@ -15,10 +15,16 @@ from app.dto.movies import (
     MovieCatalogResponse,
     MovieDetailsResponse,
     MoviePerformance,
+    MovieUpdate,
 )
 from app.dto.person import Person
 from app.dto.review import Review, ReviewSummary
-from app.movies.models import DimMovie, FactMoviePerformance
+from app.movies.models import (
+    DimGenre,
+    DimMovie,
+    FactMoviePerformance,
+    bridge_movie_genre,
+)
 
 movies_router = APIRouter()
 
@@ -239,10 +245,96 @@ async def get_movie_details(
     return MovieDetailsResponse(
         movie=movie_response,
         performance=performance_response,
-        genres=[GenreName(name=genre.nome_genero) for genre in movie.genres],
+        genres=[
+            GenreName(sk_genre_id=genre.sk_genre_id, name=genre.nome_genero)
+            for genre in movie.genres
+        ],
         cast=cast,
         crew=crew,
         reviews=reviews,
         companies=companies,
         reviews_summary=reviews_summary,
     )
+
+
+async def _ids_to_add(
+    session: AsyncSession,
+    model,
+    id_column,
+    identifiers: list[str],
+    field_name: str,
+) -> list[str]:
+    unique_ids = list(dict.fromkeys(identifiers))
+    if not unique_ids:
+        return []
+
+    rows = await session.execute(
+        select(id_column).where(id_column.in_(unique_ids))
+    )
+    found_ids = {row[0] for row in rows.all()}
+    missing_ids = set(unique_ids) - found_ids
+    if missing_ids:
+        raise HTTPException(
+            status_code=422,
+            detail=f"{field_name} inexistente(s): {', '.join(sorted(missing_ids))}",
+        )
+    return unique_ids
+
+
+async def _add_relationships(
+    session: AsyncSession,
+    movie_id: str,
+    identifiers: list[str],
+    bridge,
+    related_column: str,
+) -> None:
+    if not identifiers:
+        return
+    existing = await session.execute(
+        select(bridge.c[related_column]).where(
+            bridge.c.sk_movie_id == movie_id,
+            bridge.c[related_column].in_(identifiers),
+        )
+    )
+    existing_ids = {row[0] for row in existing.all()}
+    for identifier in identifiers:
+        if identifier not in existing_ids:
+            await session.execute(
+                bridge.insert().values(sk_movie_id=movie_id, **{related_column: identifier})
+            )
+
+
+@movies_router.patch("/{sk_movie_id}", response_model=MovieDetailsResponse)
+async def update_movie(
+    payload: MovieUpdate,
+    sk_movie_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> MovieDetailsResponse:
+    movie = await session.get(DimMovie, sk_movie_id)
+    if movie is None:
+        raise HTTPException(status_code=404, detail="Filme não encontrado")
+
+    try:
+        genre_ids = await _ids_to_add(
+            session,
+            DimGenre,
+            DimGenre.sk_genre_id,
+            payload.genre_ids_to_add,
+            "Gênero",
+        )
+
+        movie.titulo = payload.titulo
+        movie.data_lancamento = payload.data_lancamento
+        movie.ano_lancamento = payload.data_lancamento.year
+        movie.status_filme = payload.status_filme
+        movie.sinopse = payload.sinopse
+
+        await _add_relationships(
+            session, sk_movie_id, genre_ids, bridge_movie_genre, "sk_genre_id"
+        )
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+
+    return await get_movie_details(sk_movie_id=sk_movie_id, session=session)

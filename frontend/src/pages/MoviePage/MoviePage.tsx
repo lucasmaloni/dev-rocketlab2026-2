@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import PosterFrame from "../../components/PosterFrame/PosterFrame";
 import StarRating from "../../components/StarRating/StarRating";
 import DirectorList from "../../features/movies/DirectorList/DirectorList";
+import MovieEditModal from "../../features/movies/MovieEditModal/MovieEditModal";
 import ReleaseInfo from "../../features/movies/ReleaseInfo/ReleaseInfo";
 import { useMovieDetails } from "../../features/movies/useMovieDetails";
 import ReviewList from "../../features/movies/ReviewList/ReviewList";
@@ -45,6 +46,7 @@ export default function MoviePage() {
   const [activeTab, setActiveTab] = useState<TabType>("cast");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewUser, setReviewUser] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const rating = performance?.nota_tmdb ?? performance?.nota_imdb;
   const ratingOutOfFive = rating !== null && rating !== undefined ? rating / 2 : null;
@@ -55,6 +57,19 @@ export default function MoviePage() {
     setReviewUser(randomUser);
     setIsReviewModalOpen(true);
   };
+
+  const movieDetails = movie
+    ? {
+        movie,
+        performance,
+        genres,
+        cast,
+        crew,
+        reviews,
+        companies,
+        reviews_summary: reviewsSummary,
+      }
+    : null;
   
   const formatCurrency = (value: number | null | undefined) =>
     value === null || value === undefined
@@ -107,6 +122,7 @@ export default function MoviePage() {
             className="btn-icon"
             type="button"
             aria-label="Editar filme cadastrado"
+            onClick={() => setIsEditModalOpen(true)}
           >
             <Pencil size={22} className={styles.iconEdit} />
           </button>
@@ -295,6 +311,12 @@ export default function MoviePage() {
           skMovieId={skMovieId}
           initialUser={reviewUser}
           onClose={() => setIsReviewModalOpen(false)}
+        />
+      )}
+      {isEditModalOpen && movieDetails && (
+        <MovieEditModal
+          movieDetails={movieDetails}
+          onClose={() => setIsEditModalOpen(false)}
         />
       )}
     </div>
