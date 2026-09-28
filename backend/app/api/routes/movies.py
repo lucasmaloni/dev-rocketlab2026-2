@@ -1,8 +1,8 @@
 import math
 import unicodedata
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy import case, func, select
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -338,3 +338,30 @@ async def update_movie(
         raise
 
     return await get_movie_details(sk_movie_id=sk_movie_id, session=session)
+
+
+@movies_router.delete("/{sk_movie_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(
+    sk_movie_id: str,
+    session: AsyncSession = Depends(get_db),
+) -> None:
+    """Exclui permanentemente o filme.
+
+    As três bridges, performance, resumo de avaliações e reviews são removidos
+    pelo ON DELETE CASCADE do banco (PRAGMA foreign_keys=ON em session.py).
+    Gêneros, produtoras e pessoas compartilhados permanecem; só as associações
+    somem.
+    """
+    try:
+        result = await session.execute(
+            delete(DimMovie).where(DimMovie.sk_movie_id == sk_movie_id)
+        )
+        if result.rowcount == 0:
+            await session.rollback()
+            raise HTTPException(status_code=404, detail="Filme não encontrado")
+        await session.commit()
+    except HTTPException:
+        raise
+    except Exception:
+        await session.rollback()
+        raise

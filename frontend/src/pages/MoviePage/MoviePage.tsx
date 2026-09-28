@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import PosterFrame from "../../components/PosterFrame/PosterFrame";
 import StarRating from "../../components/StarRating/StarRating";
+import DeleteMovieModal from "../../features/movies/DeleteMovieModal/DeleteMovieModal";
 import DirectorList from "../../features/movies/DirectorList/DirectorList";
 import MovieEditModal from "../../features/movies/MovieEditModal/MovieEditModal";
 import ReleaseInfo from "../../features/movies/ReleaseInfo/ReleaseInfo";
@@ -15,38 +16,26 @@ import styles from "./MoviePage.module.css";
 type TabType = "cast" | "crew" | "details" | "genres" | "releases" | "reviews";
 
 const MOCK_USERS = [
-  "Shinji Ikari",
-  "Rei Ayanami",
-  "Asuka Langley",
-  "Misato Katsuragi",
-  "Gendo Ikari",
-  "Ritsuko Akagi",
-  "Kaworu Nagisa",
-  "Toji Suzuhara",
-  "Kensuke Aida",
-  "Hikari Horaki",
+  "Shinji Ikari", "Rei Ayanami", "Asuka Langley", "Misato Katsuragi", "Gendo Ikari", 
+  "Ritsuko Akagi", "Kaworu Nagisa", "Toji Suzuhara", "Kensuke Aida", "Pen Pen",
 ];
 
 export default function MoviePage() {
   const { skMovieId } = useParams<{ skMovieId: string }>();
   const navigate = useNavigate();
   const {
-    movie,
-    performance,
-    genres,
-    cast,
-    crew,
-    reviews,
-    companies,
-    reviewsSummary,
-    isLoading,
-    error,
-    refetch,
+    movie, performance,
+    genres, cast,
+    crew, reviews,
+    companies, reviewsSummary,
+    isLoading, error, refetch,
   } = useMovieDetails(skMovieId);
+
   const [activeTab, setActiveTab] = useState<TabType>("cast");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewUser, setReviewUser] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const rating = performance?.nota_tmdb ?? performance?.nota_imdb;
   const ratingOutOfFive = rating !== null && rating !== undefined ? rating / 2 : null;
@@ -130,8 +119,10 @@ export default function MoviePage() {
           <button
             className="btn-icon"
             type="button"
-            aria-label="Excluir filme cadastrado">
-              <Trash size={22} className={styles.iconDelete} />
+            aria-label="Excluir filme cadastrado"
+            onClick={() => setIsDeleteModalOpen(true)}
+          >
+            <Trash size={22} className={styles.iconDelete} />
           </button>
         </div>
       </header>
@@ -317,6 +308,13 @@ export default function MoviePage() {
         <MovieEditModal
           movieDetails={movieDetails}
           onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
+      {isDeleteModalOpen && movie && (
+        <DeleteMovieModal
+          skMovieId={movie.sk_movie_id}
+          movieTitle={movie.titulo}
+          onClose={() => setIsDeleteModalOpen(false)}
         />
       )}
     </div>

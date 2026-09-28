@@ -52,8 +52,11 @@ export const updateMovie = async (
   return response.data;
 };
 
+export const deleteMovie = async (skMovieId: string): Promise<void> => {
+  await client.delete(`/movies/${skMovieId}`);
+};
+
 export const getGenres = async (signal?: AbortSignal): Promise<Genre[]> => {
   const response = await client.get<Genre[]>("/genres", { signal });
   return response.data;
 };
-
