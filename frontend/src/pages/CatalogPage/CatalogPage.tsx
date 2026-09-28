@@ -51,11 +51,8 @@ function CatalogPage() {
         <div className={`container ${styles.headerInner}`}>
           <span className={styles.brand}>
             <Clapperboard size={26} color="var(--accent)" />
-            <h3>Catálogo de Filmes</h3>
+            <h3>Você Pode (Não) Assistir</h3>
           </span>
-          <button className="btn-icon" aria-label="Abrir menu">
-            <Menu size={24} />
-          </button>
         </div>
       </header>
 

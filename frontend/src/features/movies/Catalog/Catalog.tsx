@@ -1,4 +1,4 @@
-import { Funnel } from "lucide-react";
+import { Plus } from "lucide-react";
 import MovieCard from "../MovieCard/MovieCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import type { MovieCatalogItem } from "../../../types/movieCatalogItem";
@@ -34,7 +34,7 @@ function Catalog({
           type="button"
           aria-label="Abrir filtros"
           >
-            <Funnel size={22} />
+            <Plus size={22} />
           </button>
           <SearchBar
             placeholder="Buscar filmes..."

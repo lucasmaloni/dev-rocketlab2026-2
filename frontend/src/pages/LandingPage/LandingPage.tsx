@@ -65,7 +65,7 @@ function LandingPage() {
         <div className={`container ${styles.headerInner}`}>
           <span className={styles.brand}>
             <Clapperboard size={26} color="var(--accent)" />
-            <h3>Catálogo de Filmes</h3>
+            <h3>You Can (Not) Watch</h3>
           </span>
           <button className="btn-icon" aria-label="Abrir menu">
             <Menu size={24} />
