@@ -13,7 +13,7 @@ from app.db.seed.seeder import Seeder
 configure_logging()
 settings = get_settings()
 
-SEEDING_ENABLED = False
+SEEDING_ENABLED = True
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
