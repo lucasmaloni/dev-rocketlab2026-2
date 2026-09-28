@@ -2,6 +2,8 @@
 
 ## Estrutura
 
+### Backend
+
 Aproveitei boa parte da estrutura inicial, fazendo ajustes apenas na configuração/composição do roteamento da api, criando a pasta `/router` e os dominios da aplicação como pastas desse diretório.
 
 Além disso, adicionei uma pasta `/dto`, responsável por agrupar todos os DTOs utilizados pela API para retornar dados de forma segura e são espelhados em TypeScript no frontend.
@@ -24,6 +26,37 @@ Para a população dos dados, criei uma classe `Seeder` que consome os `.csv` e 
 |   |        └── seeds/    # Contém os .csv utilizados para popular a aplicação
 │   └── tests/
 └── README.md
+```
+
+### Frontend
+
+Implementei do zero seguindo esse padrão, visando modularidade e aproveitamendo de componentes genéricos em diferentes partes da aplicação.
+
+```txt
+src/
+├── api/                   # Camada de interaçao com API
+│   ├── client.ts
+│   ├── movies.ts
+│   └── reviews.ts
+├── components/            # Componentes consumidos por toda aplicação
+│   ├── Pagination.tsx
+│   ├── SearchBar.tsx
+│   ├── StarRating.tsx
+│   └── Modal.tsx
+├── features/              # Componentes que agrupam componentes genéricos e possuem lógica própria de renderização
+│   └── movies/
+│       ├── MovieCard.tsx
+│       ├── MovieForm.tsx
+│       ├── ReviewList.tsx
+│       ├── ReviewForm.tsx
+│       └── useMovies.ts
+├── pages/
+│   ├── MoviesPage.tsx
+│   └── MovieDetailPage.tsx
+├── types/                 # Criação de tipos/DTOs/interfaces do TS
+│   └── movie.ts
+├── App.tsx
+└── main.tsx
 ```
 
 ## Execução
