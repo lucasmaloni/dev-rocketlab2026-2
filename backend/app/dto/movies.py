@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.dto.company import Company
 from app.dto.genre import GenreName
 from app.dto.person import Person
-from app.dto.review import Review
+from app.dto.review import Review, ReviewSummary
 
 
 class Movie(BaseModel):
@@ -60,3 +60,4 @@ class MovieDetailsResponse(BaseModel):
   crew: list[Person]
   reviews: list[Review]
   companies: list[Company]
+  reviews_summary: ReviewSummary | None

@@ -4,21 +4,57 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import PosterFrame from "../../components/PosterFrame/PosterFrame";
 import StarRating from "../../components/StarRating/StarRating";
+import DirectorList from "../../features/movies/DirectorList/DirectorList";
 import ReleaseInfo from "../../features/movies/ReleaseInfo/ReleaseInfo";
 import { useMovieDetails } from "../../features/movies/useMovieDetails";
 import ReviewList from "../../features/movies/ReviewList/ReviewList";
+import ReviewModal from "../../features/movies/ReviewModal/ReviewModal";
 import styles from "./MoviePage.module.css";
 
 type TabType = "cast" | "crew" | "details" | "genres" | "releases" | "reviews";
 
+const MOCK_USERS = [
+  "Shinji Ikari",
+  "Rei Ayanami",
+  "Asuka Langley",
+  "Misato Katsuragi",
+  "Gendo Ikari",
+  "Ritsuko Akagi",
+  "Kaworu Nagisa",
+  "Toji Suzuhara",
+  "Kensuke Aida",
+  "Hikari Horaki",
+];
+
 export default function MoviePage() {
   const { skMovieId } = useParams<{ skMovieId: string }>();
   const navigate = useNavigate();
-  const { movie, performance, genres, cast, crew, reviews, companies, isLoading, error, refetch } = useMovieDetails(skMovieId);
+  const {
+    movie,
+    performance,
+    genres,
+    cast,
+    crew,
+    reviews,
+    companies,
+    reviewsSummary,
+    isLoading,
+    error,
+    refetch,
+  } = useMovieDetails(skMovieId);
   const [activeTab, setActiveTab] = useState<TabType>("cast");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewUser, setReviewUser] = useState("");
 
   const rating = performance?.nota_tmdb ?? performance?.nota_imdb;
   const ratingOutOfFive = rating !== null && rating !== undefined ? rating / 2 : null;
+  const directors = crew.filter((person) => person.tipo_pessoa === "Diretor");
+
+  const openReviewModal = () => {
+    const randomUser = MOCK_USERS[Math.floor(Math.random() * MOCK_USERS.length)];
+    setReviewUser(randomUser);
+    setIsReviewModalOpen(true);
+  };
   
   const formatCurrency = (value: number | null | undefined) =>
     value === null || value === undefined
@@ -34,7 +70,7 @@ export default function MoviePage() {
     { id: "crew", label: "Equipe" },
     { id: "details", label: "Detalhes" },
     { id: "genres", label: "Gêneros" },
-    { id: "releases", label: "Lançamentos" },
+    { id: "releases", label: "Lançamento" },
     { id: "reviews", label: "Avaliações" },
   ];
 
@@ -62,6 +98,7 @@ export default function MoviePage() {
             className="btn-icon"
             type="button"
             aria-label="Registrar avaliação de filme"
+            onClick={openReviewModal}
           >
             <Eye size={22} className={styles.iconView} />
           </button>
@@ -111,7 +148,7 @@ export default function MoviePage() {
                   {movie.status_filme && <span>{movie.status_filme}</span>}
                 </div>
                 <div className={styles.directorLine}>
-                  Directed by <strong>Dados Indisponíveis</strong>
+                  <DirectorList directors={directors} />
                 </div>
               </div>
 
@@ -182,7 +219,31 @@ export default function MoviePage() {
                     />
                   )}
 
-                  {activeTab === "reviews" && <ReviewList reviews={reviews} />}
+                  {activeTab === "reviews" && (
+                    reviews.length > 0 && reviewsSummary ? (
+                      <div className={styles.reviewsContent}>
+                        <div className={styles.userRatingSummary}>
+                          <span>Avaliação dos usuários</span>
+                          <div className={styles.userRatingValue}>
+                            {reviewsSummary.nota_media_usuarios !== null ? (
+                              <>
+                                <StarRating value={reviewsSummary.nota_media_usuarios / 2} />
+                                <strong>{(reviewsSummary.nota_media_usuarios / 2).toFixed(1)} / 5</strong>
+                              </>
+                            ) : (
+                              <strong>Sem média</strong>
+                            )}
+                            <span>
+                              {reviewsSummary.qtd_avaliacoes_usuarios} avaliação(ões)
+                            </span>
+                          </div>
+                        </div>
+                        <ReviewList reviews={reviews} />
+                      </div>
+                    ) : (
+                      <p className={styles.emptyState}>Sem avaliações</p>
+                    )
+                  )}
 
                   {activeTab === "genres" && (
                     <div className={styles.tagList}>
@@ -228,6 +289,14 @@ export default function MoviePage() {
           </div>
         )}
       </main>
+      {isReviewModalOpen && skMovieId && (
+        <ReviewModal
+          key={reviewUser}
+          skMovieId={skMovieId}
+          initialUser={reviewUser}
+          onClose={() => setIsReviewModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

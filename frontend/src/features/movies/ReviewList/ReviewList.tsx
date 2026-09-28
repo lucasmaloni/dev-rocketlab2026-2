@@ -21,7 +21,7 @@ function ReviewList({ reviews }: ReviewListProps) {
               <StarRating value={review.nota / 2} />
             </div>
           </div>
-          <p>{review.comentario}</p>
+          <p>{review.comentario ?? "Sem comentário."}</p>
         </li>
       ))}
     </ul>

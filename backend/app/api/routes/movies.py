@@ -17,7 +17,7 @@ from app.dto.movies import (
     MoviePerformance,
 )
 from app.dto.person import Person
-from app.dto.review import Review
+from app.dto.review import Review, ReviewSummary
 from app.movies.models import DimMovie, FactMoviePerformance
 
 movies_router = APIRouter()
@@ -155,6 +155,7 @@ async def get_movie_details(
             selectinload(DimMovie.people),
             selectinload(DimMovie.reviews),
             selectinload(DimMovie.companies),
+            selectinload(DimMovie.reviews_summary),
         )
         .where(DimMovie.sk_movie_id == sk_movie_id)
     )
@@ -226,6 +227,14 @@ async def get_movie_details(
         )
         for company in movie.companies
     ]
+    reviews_summary = (
+        ReviewSummary(
+            qtd_avaliacoes_usuarios=movie.reviews_summary.qtd_avaliacoes_usuarios,
+            nota_media_usuarios=movie.reviews_summary.nota_media_usuarios,
+        )
+        if movie.reviews_summary is not None
+        else None
+    )
 
     return MovieDetailsResponse(
         movie=movie_response,
@@ -235,4 +244,5 @@ async def get_movie_details(
         crew=crew,
         reviews=reviews,
         companies=companies,
+        reviews_summary=reviews_summary,
     )
